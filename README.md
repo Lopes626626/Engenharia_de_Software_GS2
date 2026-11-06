@@ -1,5 +1,5 @@
 # 🌐 UrbiSafe — Urban Risk Intelligence Platform
-**Global Solution 2026.2 — CitizenTech | Engenharia de Software (FIAP)**
+**Global Solution 2 — CitizenTech | Engenharia de Software (FIAP)**
 
 ---
 
@@ -8,10 +8,9 @@
 * **Breno Ferreira e Silva** — RM: 555503 — 3ECR
 * **Vinicius de Abreu Fernandes** — RM: 558184 — 3ECA 
 
-## 🔗 Links Oficiais da Entrega
-* 💻 **Protótipo Funcional Web (HTML/JS):** `[Inserir Link do Deploy / GitHub Pages]`
-* 📄 **Documentação Técnica Completa (PDF):** `[Inserir Link para o PDF no repositório]`
-* 🎥 **Vídeo de Demonstração (YouTube - até 3 min):** `[Inserir Link do YouTube]`
+## 🔗 Links e Caminhos
+* 💻 **Protótipo Web (HTML):** [UrbiSafe Web](index.html)
+* 🎥 **Vídeo :**  
 
 ---
 
@@ -26,7 +25,6 @@
 
 1. **Carlos Mendes (Morador Urbano, 34 anos):** Desloca-se por áreas de risco. Precisa receber alertas rápidos no celular para alterar sua rota e quer relatar problemas na sua rua em poucos cliques, com anonimato garantido.
 2. **Juliana Costa (Agente da Defesa Civil, 41 anos):** Precisa filtrar relatos falsos. Utiliza o painel operacional para auditar a origem do dado e o nível de confiança (%) antes de despachar equipes.
-3. **Roberto Almeida (Operador de Serviço Público, 29 anos):** Monitora falhas na rede de energia e água para correlacionar com chamados da comunidade e atualizar o status de restabelecimento.
 
 ---
 
@@ -107,7 +105,14 @@ O sistema deve calcular automaticamente a prioridade de cada ocorrência conside
 
 ---
 
-## 📐 5. Diagramas UML e Arquitetura em Camadas
+## 📐 5. Diagramas UML
 
-### 5.1. Arquitetura lógica do sistema
+### 5.1. Diagrama de Sequência
+![Diagrama de Sequência](Imagens/Diagrama%20de%20Sequência.png)
+
+### 5.2. Diagrama de Estado
+![Diagrama de Estado](Imagens/Diagrama%20de%20Estado.png)
+
+### 5.3 Arquiterura de camadas
+![Arquitetura de Camada](Imagens/Arquitetura%20em%20camadas.png)
 
