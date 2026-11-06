@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UrbiSafe | Inteligência e Monitoramento de Riscos Urbanos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+    .pin-pulse::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      background: inherit;
+      z-index: -1;
+      animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- =========================================================
+       OVERLAY DE CARREGAMENTO (SPINNER GIRANDO)
+       ========================================================= -->
+  <div id="loading-overlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex-col items-center justify-center">
+    <div class="relative flex items-center justify-center">
+      <div class="w-16 h-16 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
+      <i class="fa-solid fa-shield-halved text-blue-500 absolute text-lg"></i>
+    </div>
+    <p id="loading-title" class="mt-4 font-semibold text-white text-base">Autenticando credenciais...</p>
+    <p id="loading-subtitle" class="text-xs text-slate-400 mt-1">Estabelecendo conexão segura TLS 1.3 e sincronizando sensores IoT</p>
+  </div>
+
+  <!-- =========================================================
+       NOTIFICAÇÃO FLUTUANTE (TOAST)
+       ========================================================= -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-4 max-w-sm flex items-start gap-3 transition-all">
+    <div id="toast-icon" class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    <div class="flex-1">
+      <h4 id="toast-title" class="text-sm font-bold text-white">Sucesso</h4>
+      <p id="toast-msg" class="text-xs text-slate-400 mt-0.5">Operação realizada.</p>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       VISÃO 1: PORTAL DE AUTENTICAÇÃO E LOGIN (ISOLADO)
+       ========================================================= -->
+  <div id="auth-screen" class="min-h-screen flex flex-col lg:flex-row">
+    
+    <!-- Painel Institucional Esquerdo -->
+    <div class="lg:w-1/2 bg-gradient-to-br from-slate-900 via-blue-950/50 to-slate-950 p-8 lg:p-16 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-800 relative overflow-hidden">
+      <div class="relative z-10">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white text-xl shadow-lg shadow-blue-600/30">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <span class="font-bold text-xl tracking-tight text-white">UrbiSafe</span>
+            <span class="block text-xs text-blue-400 font-medium">Urban Risk Intelligence Platform</span>
+          </div>
+        </div>
+
+        <h1 class="text-3xl lg:text-4xl font-extrabold text-white mt-12 leading-tight">
+          Monitoramento inteligente e colaborativo para cidades resilientes.
+        </h1>
+        <p class="text-slate-400 text-sm lg:text-base mt-4 leading-relaxed max-w-xl">
+          Integração em tempo real entre sensores IoT municipais, bases de concessionárias públicas e relatos da comunidade para prevenção de alagamentos, ilhas de calor e falhas em serviços essenciais.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-10">
+          <div class="bg-slate-900/70 border border-slate-800/90 p-4 rounded-xl">
+            <i class="fa-solid fa-bolt text-amber-400 text-lg mb-2"></i>
+            <p class="text-xs font-bold text-white">Tempo Real (< 5s)</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Processamento instantâneo de alertas críticos por região.</p>
+          </div>
+          <div class="bg-slate-900/70 border border-slate-800/90 p-4 rounded-xl">
+            <i class="fa-solid fa-magnifying-glass-chart text-blue-400 text-lg mb-2"></i>
+            <p class="text-xs font-bold text-white">Índice de Confiança</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Auditoria transparente da origem de cada informação.</p>
+          </div>
+          <div class="bg-slate-900/70 border border-slate-800/90 p-4 rounded-xl">
+            <i class="fa-solid fa-user-lock text-emerald-400 text-lg mb-2"></i>
+            <p class="text-xs font-bold text-white">Privacidade LGPD</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Relatos comunitários 100% anonimizados na origem.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative z-10 mt-12 pt-6 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-4 text-xs text-slate-500">
+        <span><i class="fa-solid fa-circle text-[8px] text-emerald-400 mr-1.5"></i> Todos os sistemas operacionais (SLA 99,9%)</span>
+        <span>São Paulo, SP • Telemetria Municipal Integrada</span>
+      </div>
+    </div>
+
+    <!-- Formulário de Login Direito -->
+    <div class="lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-slate-950">
+      <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <h2 class="text-2xl font-bold text-white">Entrar na Plataforma</h2>
+        <p class="text-xs text-slate-400 mt-1">Insira suas credenciais ou escolha uma conta de demonstração rápida.</p>
+
+        <!-- Seletor de Conta Rápida -->
+        <div class="mt-5">
+          <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Acesso Rápido de Demonstração</label>
+          <div class="grid grid-cols-2 gap-2.5">
+            <button type="button" onclick="preencherLogin('morador')" id="btn-demo-morador" class="border-2 border-blue-500 bg-blue-950/30 p-3 rounded-xl text-left transition">
+              <div class="flex items-center justify-between">
+                <i class="fa-solid fa-user text-blue-400"></i>
+                <span class="text-[10px] bg-blue-600 text-white px-1.5 py-0.5 rounded font-semibold">Cidadão</span>
+              </div>
+              <p class="text-xs font-bold text-white mt-1.5">Carlos Mendes</p>
+              <p class="text-[11px] text-slate-400 truncate">Morador • Bela Vista</p>
+            </button>
+
+            <button type="button" onclick="preencherLogin('agente')" id="btn-demo-agente" class="border border-slate-800 bg-slate-950/60 hover:border-slate-700 p-3 rounded-xl text-left transition">
+              <div class="flex items-center justify-between">
+                <i class="fa-solid fa-helmet-safety text-amber-400"></i>
+                <span class="text-[10px] bg-slate-800 text-amber-300 px-1.5 py-0.5 rounded font-semibold">Defesa Civil</span>
+              </div>
+              <p class="text-xs font-bold text-white mt-1.5">Juliana Costa</p>
+              <p class="text-[11px] text-slate-400 truncate">Coordenadora Operacional</p>
+            </button>
+          </div>
+        </div>
+
+        <form onsubmit="executarLogin(event)" class="mt-5 space-y-4">
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1">E-mail ou Credencial Funcional</label>
+            <div class="relative">
+              <i class="fa-regular fa-envelope absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+              <input type="email" id="login-email" required value="carlos.mendes@cidadao.sp.gov.br" class="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:outline-none rounded-xl pl-10 pr-4 py-2.5 text-sm text-white">
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <label class="font-medium text-slate-300">Senha de Acesso</label>
+              <a href="javascript:void(0)" onclick="mostrarToast('Recuperação de Senha', 'Link de redefinição enviado para o e-mail cadastrado.')" class="text-blue-400 hover:underline">Esqueceu a senha?</a>
+            </div>
+            <div class="relative">
+              <i class="fa-solid fa-lock absolute left-3.5 top-3 text-slate-500 text-sm"></i>
+              <input type="password" id="login-senha" required value="••••••••••••" class="w-full bg-slate-950 border border-slate-800 focus:border-blue-500 focus:outline-none rounded-xl pl-10 pr-4 py-2.5 text-sm text-white">
+            </div>
+          </div>
+
+          <!-- Termo de Consentimento LGPD -->
+          <div class="bg-slate-950 border border-slate-800/90 rounded-xl p-3.5 space-y-2">
+            <label class="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer">
+              <input type="checkbox" id="login-lgpd" checked class="mt-0.5 accent-blue-600 w-4 h-4 rounded">
+              <span>Concordo com os <strong class="text-white">Termos de Privacidade (LGPD)</strong> e autorizo o uso de localização aproximada para alertas de risco. Relatos enviados são anonimizados automaticamente.</span>
+            </label>
+          </div>
+
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition flex items-center justify-center gap-2">
+            <span>Acessar Painel UrbiSafe</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       APLICAÇÃO PRINCIPAL (APÓS LOGIN)
+       ========================================================= -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col md:flex-row">
+
+    <!-- MENU LATERAL (SIDEBAR) -->
+    <aside class="w-full md:w-64 bg-slate-900 border-b md:border-b-0 md:border-r border-slate-800 flex flex-col justify-between shrink-0">
+      <div>
+        <!-- Logo -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow">
+              <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div>
+              <span class="font-bold text-base text-white leading-none">UrbiSafe</span>
+              <span class="block text-[10px] text-emerald-400 font-medium mt-0.5"><i class="fa-solid fa-circle text-[6px] mr-1"></i>Monitoramento Ao Vivo</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Links de Navegação -->
+        <nav class="p-3 space-y-1">
+          <p class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Monitoramento Urbano</p>
+          
+          <button onclick="navegar('mapa')" id="nav-mapa" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium bg-blue-600 text-white">
+            <i class="fa-solid fa-map-location-dot w-4 text-center"></i>
+            <span>Mapa em Tempo Real</span>
+          </button>
+
+          <button onclick="navegar('alertas')" id="nav-alertas" class="menu-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-triangle-exclamation w-4 text-center"></i>
+              <span>Alertas Priorizados</span>
+            </div>
+            <span id="badge-count-alertas" class="bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full text-[10px] font-bold">4</span>
+          </button>
+
+          <button onclick="navegar('detalhe')" id="nav-detalhe" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-circle-info w-4 text-center"></i>
+            <span>Detalhes da Ocorrência</span>
+          </button>
+
+          <button onclick="navegar('confianca')" id="nav-confianca" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-amber-300 hover:bg-slate-800">
+            <i class="fa-solid fa-magnifying-glass-chart w-4 text-center"></i>
+            <span>Origem e Confiança (%)</span>
+          </button>
+
+          <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Colaboração & Avisos</p>
+
+          <button onclick="navegar('reportar')" id="nav-reportar" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-bullhorn w-4 text-center text-emerald-400"></i>
+            <span>Reportar Ocorrência</span>
+          </button>
+
+          <button onclick="navegar('notificacoes')" id="nav-notificacoes" class="menu-item w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-bell w-4 text-center"></i>
+              <span>Central de Notificações</span>
+            </div>
+            <span id="badge-count-notif" class="bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded-full text-[10px] font-bold">3</span>
+          </button>
+
+          <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Gestão & Privacidade</p>
+
+          <!-- Apenas visível ou liberado para Agentes da Defesa Civil -->
+          <button onclick="navegar('agente')" id="nav-agente" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-sliders w-4 text-center text-purple-400"></i>
+            <span>Centro Operacional</span>
+          </button>
+
+          <button onclick="navegar('privacidade')" id="nav-privacidade" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
+            <i class="fa-solid fa-user-shield w-4 text-center text-emerald-400"></i>
+            <span>Privacidade & LGPD</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Cartão do Usuário Logado no Rodapé da Sidebar -->
+      <div class="p-3 border-t border-slate-800 bg-slate-950/50">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex items-center gap-2.5 overflow-hidden">
+            <div id="avatar-usuario" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              CM
+            </div>
+            <div class="truncate">
+              <p id="sidebar-nome" class="text-xs font-bold text-white truncate">Carlos Mendes</p>
+              <p id="sidebar-cargo" class="text-[10px] text-slate-400 truncate">Morador • Hash #9942A</p>
+            </div>
+          </div>
+          <button onclick="fazerLogout()" title="Sair da conta" class="text-slate-400 hover:text-rose-400 p-2 rounded-lg hover:bg-slate-800 transition">
+            <i class="fa-solid fa-right-from-bracket text-xs"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE CONTEÚDO DIREITA -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+      <!-- TOPBAR -->
+      <header class="bg-slate-900/80 backdrop-blur border-b border-slate-800 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
+        <div>
+          <h2 id="topbar-titulo" class="text-base font-bold text-white">Mapa de Monitoramento Urbano</h2>
+          <p id="topbar-subtitulo" class="text-xs text-slate-400">Região Metropolitana de São Paulo • Atualização contínua (< 5s)</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="navegar('reportar')" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-3.5 py-1.5 rounded-lg shadow transition">
+            <i class="fa-solid fa-plus mr-1"></i> Reportar Risco
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTAINER DAS VISÕES -->
+      <main class="p-6 flex-1 max-w-7xl w-full mx-auto space-y-6">
+
+        <!-- =====================================================
+             VISÃO 2: MAPA DE MONITORAMENTO (PAINEL PRINCIPAL)
+             ===================================================== -->
+        <section id="view-mapa" class="app-view space-y-6">
+          <!-- KPIs Superiores -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>Ocorrências Ativas</span>
+                <i class="fa-solid fa-satellite-dish text-blue-400"></i>
+              </div>
+              <p class="text-2xl font-extrabold text-white mt-1" id="kpi-ativos">4</p>
+              <span class="text-[11px] text-emerald-400"><i class="fa-solid fa-rotate mr-1"></i>Sincronizado há 1,8s</span>
+            </div>
+
+            <div class="bg-slate-900 border border-rose-900/50 p-4 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-rose-300">
+                <span>Alertas de Nível Crítico</span>
+                <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+              </div>
+              <p class="text-2xl font-extrabold text-rose-400 mt-1" id="kpi-criticos">2</p>
+              <span class="text-[11px] text-slate-400">Prioridade máxima de resposta</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>Confiança Média da Rede</span>
+                <i class="fa-solid fa-shield-check text-amber-400"></i>
+              </div>
+              <p class="text-2xl font-extrabold text-amber-400 mt-1" id="kpi-confianca">84%</p>
+              <span class="text-[11px] text-slate-400">Sensores IoT + Bases + Moradores</span>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+              <div class="flex items-center justify-between text-xs text-slate-400">
+                <span>Estações & Sensores Online</span>
+                <i class="fa-solid fa-microchip text-emerald-400"></i>
+              </div>
+              <p class="text-2xl font-extrabold text-white mt-1">142 / 142</p>
+              <span class="text-[11px] text-emerald-400">Disponibilidade 99,98%</span>
+            </div>
+          </div>
+
+          <!-- Barra de Filtros do Mapa -->
+          <div class="bg-slate-900 border border-slate-800 p-3 rounded-2xl flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-slate-400 px-2"><i class="fa-solid fa-filter mr-1"></i> Filtrar camada:</span>
+              <button onclick="aplicarFiltro('TODOS')" id="filtro-TODOS" class="filtro-btn bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium">Todos</button>
+              <button onclick="aplicarFiltro('Alagamento')" id="filtro-Alagamento" class="filtro-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-house-flood-water text-rose-400 mr-1"></i> Alagamentos</button>
+              <button onclick="aplicarFiltro('Ilha de Calor')" id="filtro-Ilha de Calor" class="filtro-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-temperature-arrow-up text-orange-400 mr-1"></i> Ilhas de Calor</button>
+              <button onclick="aplicarFiltro('Serviços Essenciais')" id="filtro-Serviços Essenciais" class="filtro-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg font-medium"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i> Energia, Água e Transporte</button>
+            </div>
+            <span class="text-[11px] text-slate-400 pr-2"><i class="fa-solid fa-universal-access text-blue-400 mr-1"></i> Padrão acessível com ícones e rótulos</span>
+          </div>
+
+          <!-- Grid: Mapa Cartográfico + Coluna de Destaques -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Mapa -->
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between min-h-[450px] relative overflow-hidden">
+              <!-- Fundo Cartográfico SVG Estilizado de São Paulo -->
+              <div id="mapa-canvas" class="relative w-full h-96 rounded-xl bg-slate-950 border border-slate-800 overflow-hidden">
+                <!-- Malha Viária e Rios Simulados (Tietê / Pinheiros) -->
+                <svg class="absolute inset-0 w-full h-full opacity-25 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-width="0.7"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid)" />
+                  <!-- Rio Tietê e Pinheiros -->
+                  <path d="M 0 110 Q 220 90, 420 130 T 800 115" fill="none" stroke="#0284c7" stroke-width="14" stroke-linecap="round"/>
+                  <path d="M 210 105 Q 230 240, 170 390" fill="none" stroke="#0284c7" stroke-width="10" stroke-linecap="round"/>
+                  <!-- Grandes Avenidas -->
+                  <path d="M 120 0 L 580 400" fill="none" stroke="#475569" stroke-width="4" stroke-dasharray="6,6"/>
+                  <path d="M 0 260 L 800 190" fill="none" stroke="#475569" stroke-width="4"/>
+                </svg>
+
+                <!-- Rótulos Geográficos de Bairros -->
+                <span class="absolute top-4 left-6 text-[10px] font-bold uppercase tracking-widest text-slate-600 pointer-events-none">Zona Norte / Santana</span>
+                <span class="absolute top-16 left-1/3 text-[10px] font-bold uppercase tracking-widest text-sky-800 pointer-events-none">Calha Marginal Tietê</span>
+                <span class="absolute bottom-8 left-8 text-[10px] font-bold uppercase tracking-widest text-slate-600 pointer-events-none">Pinheiros / Zona Oeste</span>
+                <span class="absolute top-1/2 left-1/2 text-[10px] font-bold uppercase tracking-widest text-slate-600 pointer-events-none">Centro / Bela Vista</span>
+                <span class="absolute top-1/3 right-8 text-[10px] font-bold uppercase tracking-widest text-slate-600 pointer-events-none">Mooca / Zona Leste</span>
+
+                <!-- Container dos Marcadores Dinâmicos -->
+                <div id="mapa-marcadores" class="absolute inset-0"></div>
+              </div>
+
+              <!-- Legenda de Severidade -->
+              <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300 bg-slate-950/90 border border-slate-800 px-4 py-2.5 rounded-xl">
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span> <strong>Crítico (≥ 16):</strong> Bloqueio / Emergência</span>
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> <strong>Alto (10–15,9):</strong> Evitar via</span>
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> <strong>Moderado (5–9,9):</strong> Atenção</span>
+                <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> <strong>Em Validação (< 50% conf.):</strong> Análise</span>
+              </div>
+            </div>
+
+            <!-- Feed Lateral de Ocorrências -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="font-bold text-sm text-white">Fila de Prioridade Ao Vivo</h3>
+                  <span class="text-[11px] text-blue-400">Por Score de Risco</span>
+                </div>
+                <div id="mapa-feed-lateral" class="space-y-3"></div>
+              </div>
+
+              <button onclick="navegar('alertas')" class="mt-4 w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2.5 rounded-xl transition">
+                Abrir Lista Completa de Alertas <i class="fa-solid fa-arrow-right ml-1"></i>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 3: LISTA DE ALERTAS PRIORIZADOS
+             ===================================================== -->
+        <section id="view-alertas" class="app-view hidden space-y-5">
+          <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 class="text-lg font-bold text-white">Central de Alertas Priorizados</h3>
+              <p class="text-xs text-slate-400 mt-0.5">Eventos ordenados automaticamente combinando severidade física, impacto populacional na região e índice de confiança das fontes.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="navegar('reportar')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+                <i class="fa-solid fa-plus mr-1"></i> Novo Relato
+              </button>
+            </div>
+          </div>
+
+          <div id="container-lista-alertas" class="space-y-4"></div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 4: DETALHES DA OCORRÊNCIA E CONFIRMAÇÃO
+             ===================================================== -->
+        <section id="view-detalhe" class="app-view hidden space-y-6">
+          <div class="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+              <button onclick="navegar('alertas')" class="text-xs text-slate-400 hover:text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Voltar para Alertas Priorizados
+              </button>
+              <span class="text-xs text-slate-400">Atualização em tempo real</span>
+            </div>
+
+            <div id="conteudo-detalhe-ocorrencia"></div>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 5: AUDITORIA DE ORIGEM E NÍVEL DE CONFIANÇA (%)
+             ===================================================== -->
+        <section id="view-confianca" class="app-view hidden space-y-6">
+          <div class="max-w-4xl mx-auto bg-slate-900 border border-amber-500/40 rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+              <button onclick="navegar('detalhe')" class="text-xs text-slate-400 hover:text-white flex items-center gap-1.5">
+                <i class="fa-solid fa-arrow-left"></i> Voltar aos Detalhes do Evento
+              </button>
+              <span class="text-xs bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-full font-medium">
+                <i class="fa-solid fa-certificate mr-1"></i> Transparência de Dados & Auditoria de Fonte
+              </span>
+            </div>
+
+            <div id="conteudo-auditoria-confianca"></div>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 6: REPORTAR OCORRÊNCIA COMUNITÁRIA (3 PASSOS)
+             ===================================================== -->
+        <section id="view-reportar" class="app-view hidden space-y-6">
+          <div class="max-w-2xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+            <h3 class="text-xl font-bold text-white">Enviar Relato Comunitário</h3>
+            <p class="text-xs text-slate-400 mt-1 mb-6">Colabore com a sua vizinhança informando problemas na sua rua em 3 passos rápidos. Sua identidade é protegida e anonimizada.</p>
+
+            <form onsubmit="submeterRelato(event)" class="space-y-5">
+              <!-- Passo 1 -->
+              <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase mb-3">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">1</span>
+                  <span>Qual problema você identificou?</span>
+                </div>
+                <select id="rep-categoria" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:border-blue-500 focus:outline-none">
+                  <option value="Alagamento">🌊 Alagamento / Lâmina d'água na via</option>
+                  <option value="Ilha de Calor">🌡️ Calor Extremo / Baixa umidade severa</option>
+                  <option value="Serviços Essenciais">⚡ Queda de Energia Elétrica / Semáforo apagado</option>
+                  <option value="Serviços Essenciais">🚰 Falta de Água ou Vazamento na rede</option>
+                  <option value="Serviços Essenciais">🚌 Paralisação no Transporte Público (Ônibus/Metrô)</option>
+                </select>
+              </div>
+
+              <!-- Passo 2 -->
+              <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">2</span>
+                  <span>Localização e Gravidade</span>
+                </div>
+                <div>
+                  <label class="text-xs text-slate-400">Endereço ou Ponto de Referência (GPS Automático)</label>
+                  <input type="text" id="rep-local" required value="Av. Paulista, 1106 — Bela Vista" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white mt-1">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="text-xs text-slate-400">Gravidade no local</label>
+                    <select id="rep-severidade" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white mt-1">
+                      <option value="5">Crítica — Via bloqueada / Perigo imediato</option>
+                      <option value="4" selected>Alta — Trânsito ou serviço comprometido</option>
+                      <option value="3">Moderada — Atenção necessária</option>
+                      <option value="2">Baixa — Início de ocorrência</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-xs text-slate-400">Anexar Evidência</label>
+                    <select id="rep-foto" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white mt-1">
+                      <option value="COM_FOTO" selected>📷 Anexar Foto c/ GPS (45% Confiança Base)</option>
+                      <option value="SEM_FOTO">📝 Somente Relato em Texto (30% Confiança Base)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Passo 3 -->
+              <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase">
+                  <span class="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center text-[11px]">3</span>
+                  <span>Observações e Envio Anônimo</span>
+                </div>
+                <textarea id="rep-desc" rows="2" required class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white">Água subindo rapidamente na calçada e semáforo piscando no cruzamento principal.</textarea>
+                <div class="bg-emerald-950/30 border border-emerald-800/50 p-3 rounded-xl text-xs text-emerald-300 flex items-center gap-2.5">
+                  <i class="fa-solid fa-user-secret text-base"></i>
+                  <span><strong>Proteção LGPD Ativa:</strong> Seu nome, e-mail e telefone jamais serão exibidos publicamente. O registro será associado apenas ao token anônimo <code>#USR-9942A</code>.</span>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg transition">
+                <i class="fa-solid fa-paper-plane mr-1.5"></i> Enviar Ocorrência para a Rede
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 7: CENTRAL DE NOTIFICAÇÕES E PREFERÊNCIAS
+             ===================================================== -->
+        <section id="view-notificacoes" class="app-view hidden space-y-6">
+          <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="font-bold text-base text-white">Alertas Recebidos na Sua Região</h3>
+                <span class="text-[11px] text-emerald-400"><i class="fa-solid fa-bolt mr-1"></i>Entrega Push < 5s</span>
+              </div>
+              <div id="container-notificacoes" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 h-fit">
+              <h3 class="font-bold text-sm text-white"><i class="fa-solid fa-bell-concierge text-blue-400 mr-1.5"></i> Preferências de Alerta</h3>
+              <p class="text-xs text-slate-400">Escolha quais avisos deseja receber no seu dispositivo:</p>
+              
+              <div class="space-y-3 pt-2 text-xs">
+                <label class="flex items-center justify-between cursor-pointer">
+                  <span>Sirene Sonora em Risco Crítico</span>
+                  <input type="checkbox" checked onchange="mostrarToast('Preferência Salva', 'Configuração de alerta sonoro atualizada.')" class="accent-blue-600 w-4 h-4">
+                </label>
+                <label class="flex items-center justify-between cursor-pointer">
+                  <span>Alagamentos e Enchentes</span>
+                  <input type="checkbox" checked onchange="mostrarToast('Preferência Salva', 'Monitoramento de alagamentos atualizado.')" class="accent-blue-600 w-4 h-4">
+                </label>
+                <label class="flex items-center justify-between cursor-pointer">
+                  <span>Ondas e Ilhas de Calor (> 35°C)</span>
+                  <input type="checkbox" checked onchange="mostrarToast('Preferência Salva', 'Monitoramento térmico atualizado.')" class="accent-blue-600 w-4 h-4">
+                </label>
+                <label class="flex items-center justify-between cursor-pointer">
+                  <span>Quedas de Luz, Água e Transporte</span>
+                  <input type="checkbox" checked onchange="mostrarToast('Preferência Salva', 'Monitoramento de serviços atualizado.')" class="accent-blue-600 w-4 h-4">
+                </label>
+              </div>
+
+              <div class="pt-4 border-t border-slate-800 text-xs text-slate-400">
+                <p class="font-semibold text-slate-300 mb-1">Zonas de Interesse Cadastradas:</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="bg-slate-800 px-2 py-1 rounded text-[11px]">Bela Vista</span>
+                  <span class="bg-slate-800 px-2 py-1 rounded text-[11px]">Vila Mariana</span>
+                  <span class="bg-slate-800 px-2 py-1 rounded text-[11px]">Santana</span>
+                  <span class="bg-slate-800 px-2 py-1 rounded text-[11px]">Pinheiros</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO 8: CENTRO DE COMANDO OPERACIONAL (DEFESA CIVIL)
+             ===================================================== -->
+        <section id="view-agente" class="app-view hidden space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+              <div>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-purple-400">Centro Integrado de Comando e Controle</span>
+                <h3 class="text-xl font-bold text-white mt-0.5">Gestão do Ciclo de Vida de Eventos de Risco</h3>
+                <p class="text-xs text-slate-400">Controle operacional de ocorrências: valide relatos comunitários, dispare alertas críticos para bairros ou encerre eventos normalizados.</p>
+              </div>
+              <div class="bg-slate-950 border border-slate-800 px-4 py-2.5 rounded-xl text-xs">
+                <span class="text-slate-400">Operador Responsável:</span>
+                <strong class="text-white block">Juliana Costa • Defesa Civil SP</strong>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                    <th class="py-3 px-3">Ocorrência / Local</th>
+                    <th class="py-3 px-3">Fonte Primária</th>
+                    <th class="py-3 px-3">Confiança</th>
+                    <th class="py-3 px-3">Score</th>
+                    <th class="py-3 px-3">Status no Ciclo de Vida</th>
+                    <th class="py-3 px-3">Despacho Operacional</th>
+                  </tr>
+                </thead>
+                <tbody id="tabela-comando-agente" class="divide-y divide-slate-800"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =====================================================
+             VISÃO COMPLEMENTAR: PRIVACIDADE & DADOS PESSOAIS (LGPD)
+             ===================================================== -->
+        <section id="view-privacidade" class="app-view hidden space-y-6">
+          <div class="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-user-shield"></i>
+              </div>
+              <div>
+                <h3 class="text-lg font-bold text-white">Central do Titular de Dados (LGPD)</h3>
+                <p class="text-xs text-slate-400">Gerencie seus consentimentos, audite a anonimização e controle seus dados conforme a Lei nº 13.709/2018.</p>
+              </div>
+            </div>
+
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2 text-xs">
+              <p class="font-bold text-slate-200">Como seus dados são protegidos na arquitetura UrbiSafe:</p>
+              <p class="text-slate-400">1. <strong>Filtro de Anonimização (PII Filter):</strong> Ao enviar um relato ou confirmar uma ocorrência, seu nome, e-mail e coordenada exata de residência são removidos antes de o evento ser salvo no banco geoespacial.</p>
+              <p class="text-slate-400">2. <strong>Segregação em Cofre Isolado:</strong> Suas credenciais de acesso ficam armazenadas em um banco isolado com criptografia AES-256 e transporte TLS 1.3.</p>
+              <p class="text-emerald-400 pt-1">Identificador Anônimo Atual nas Publicações: <strong>#USR-9942A</strong></p>
+            </div>
+
+            <div class="flex flex-wrap gap-3 pt-2">
+              <button onclick="mostrarToast('Relatório de Dados', 'Arquivo JSON com seus registros de consentimento foi gerado.')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl">
+                <i class="fa-solid fa-download mr-1.5"></i> Exportar Meus Dados (Portabilidade)
+              </button>
+              <button onclick="revogarContaLGPD()" class="bg-rose-950 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs font-semibold px-4 py-2.5 rounded-xl ml-auto">
+                <i class="fa-solid fa-trash-can mr-1.5"></i> Revogar Consentimento e Excluir Conta
+              </button>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       SCRIPT DO SISTEMA (REGRAS DE NEGÓCIO, TRANSIÇÕES E ESTADOS)
+       ========================================================= -->
+  <script>
+    let usuarioAtual = {
+      nome: "Carlos Mendes",
+      cargo: "Morador • Hash #9942A",
+      iniciais: "CM",
+      tipo: "morador"
+    };
+
+    let filtroCategoria = "TODOS";
+    let idSelecionado = 1;
+
+    const eventos = [
+      {
+        id: 1,
+        titulo: "Alagamento Intransitável — Marginal Tietê (Ponte das Bandeiras)",
+        categoria: "Alagamento",
+        bairro: "Santana / Eixo Norte-Centro",
+        severidade: 5,
+        impacto: 5,
+        nc: 96,
+        origemPrimaria: "Sensor Pluviométrico #PLUV-402 + API CGE Defesa Civil",
+        pesoBase: 85,
+        confirmacoesComunidade: 6,
+        convergenciaOficial: true,
+        estado: "Alerta Emitido",
+        tempo: "há 2 segundos",
+        recomendacao: "Bloqueio total da pista expressa e local. Desvie imediatamente pela Av. Cruzeiro do Sul ou Av. Tiradentes. Equipes de drenagem no local.",
+        x: "34%", y: "28%"
+      },
+      {
+        id: 2,
+        titulo: "Interrupção de Energia Elétrica em Corredor Hospitalar e Semáforos",
+        categoria: "Serviços Essenciais",
+        bairro: "Bela Vista / Vila Mariana",
+        severidade: 4,
+        impacto: 5,
+        nc: 90,
+        origemPrimaria: "API Concessionária Enel + Telemetria CET",
+        pesoBase: 90,
+        confirmacoesComunidade: 3,
+        convergenciaOficial: true,
+        estado: "Em Monitoramento",
+        tempo: "há 3 segundos",
+        recomendacao: "Queda de fase afeta semáforos entre a Av. Paulista e Rua Vergueiro. Agentes de trânsito acionados e geradores hospitalares ativos.",
+        x: "54%", y: "55%"
+      },
+      {
+        id: 3,
+        titulo: "Ilha de Calor Severa (39,4°C) e Umidade Relativa em 16%",
+        categoria: "Ilha de Calor",
+        bairro: "Mooca / Brás",
+        severidade: 4,
+        impacto: 4,
+        nc: 85,
+        origemPrimaria: "Estação Meteorológica IoT #TH-119",
+        pesoBase: 85,
+        confirmacoesComunidade: 2,
+        convergenciaOficial: false,
+        estado: "Confirmado",
+        tempo: "há 4 segundos",
+        recomendacao: "Evite atividades físicas ao ar livre entre 11h e 16h. Tendas de hidratação abertas no Largo da Concórdia.",
+        x: "76%", y: "40%"
+      },
+      {
+        id: 4,
+        titulo: "Rompimento de Adutora e Falta de Água na Vizinhança",
+        categoria: "Serviços Essenciais",
+        bairro: "Pinheiros",
+        severidade: 3,
+        impacto: 3,
+        nc: 45,
+        origemPrimaria: "Relato Comunitário com Foto e GPS (Hash #USR-8821)",
+        pesoBase: 45,
+        confirmacoesComunidade: 0,
+        convergenciaOficial: false,
+        estado: "Em Validação",
+        tempo: "há 1 segundo",
+        recomendacao: "Ocorrência reportada por morador aguarda corroboração de vizinhos ou leitura de pressão da Sabesp para atingir 50% de confiança.",
+        x: "22%", y: "72%"
+      }
+    ];
+
+    const notificacoes = [
+      { tempo: "Há 2s", titulo: "EMERGÊNCIA: Alagamento na Marginal Tietê", desc: "Score 24.0 • Confiança de 96% confirmada por Sensor IoT e Defesa Civil.", tipo: "Crítico" },
+      { tempo: "Há 3 min", titulo: "Queda de Energia: Bela Vista / Vila Mariana", desc: "Score 18.0 • Confiança de 90% via API Enel. Semáforos inoperantes.", tipo: "Alto" },
+      { tempo: "Há 14 min", titulo: "Alerta Térmico: Ilha de Calor na Mooca (39,4°C)", desc: "Score 13.6 • Confiança de 85% via Sensor Urbano #TH-119.", tipo: "Moderado" }
+    ];
+
+    // Utilitário de Carregamento (Spinner)
+    function exibirLoading(titulo, subtitulo, duracaoMs, callback) {
+      const overlay = document.getElementById('loading-overlay');
+      document.getElementById('loading-title').innerText = titulo;
+      document.getElementById('loading-subtitle').innerText = subtitulo;
+      overlay.classList.remove('hidden');
+      overlay.classList.add('flex');
+
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+        if (callback) callback();
+      }, duracaoMs);
+    }
+
+    // Utilitário de Toast
+    function mostrarToast(titulo, mensagem) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').innerText = titulo;
+      document.getElementById('toast-msg').innerText = mensagem;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3800);
+    }
+
+    // Preenchimento rápido na tela de Login
+    function preencherLogin(perfil) {
+      const btnM = document.getElementById('btn-demo-morador');
+      const btnA = document.getElementById('btn-demo-agente');
+      if (perfil === 'agente') {
+        document.getElementById('login-email').value = "juliana.costa@defesacivil.sp.gov.br";
+        btnA.className = "border-2 border-amber-500 bg-amber-950/30 p-3 rounded-xl text-left transition";
+        btnM.className = "border border-slate-800 bg-slate-950/60 p-3 rounded-xl text-left transition";
+        usuarioAtual = { nome: "Juliana Costa", cargo: "Coordenadora Defesa Civil", iniciais: "JC", tipo: "agente" };
+      } else {
+        document.getElementById('login-email').value = "carlos.mendes@cidadao.sp.gov.br";
+        btnM.className = "border-2 border-blue-500 bg-blue-950/30 p-3 rounded-xl text-left transition";
+        btnA.className = "border border-slate-800 bg-slate-950/60 p-3 rounded-xl text-left transition";
+        usuarioAtual = { nome: "Carlos Mendes", cargo: "Morador • Hash #9942A", iniciais: "CM", tipo: "morador" };
+      }
+    }
+
+    // Execução do Login com Tela de Carregamento
+    function executarLogin(e) {
+      e.preventDefault();
+      if (!document.getElementById('login-lgpd').checked) {
+        mostrarToast("Consentimento Necessário", "Aceite o termo de privacidade LGPD para prosseguir.");
+        return;
+      }
+
+      exibirLoading(
+        "Autenticando como " + usuarioAtual.nome + "...",
+        "Aplicando filtro de privacidade LGPD e conectando ao barramento de sensores IoT",
+        900,
+        () => {
+          document.getElementById('auth-screen').classList.add('hidden');
+          document.getElementById('app-shell').classList.remove('hidden');
+          
+          // Se for morador, oculta o Centro Operacional no menu para respeitar a regra de permissão
+          const navAgente = document.getElementById('nav-agente');
+          if (usuarioAtual.tipo === 'morador') {
+            navAgente.classList.add('hidden');
+          } else {
+            navAgente.classList.remove('hidden');
+          }
+
+          atualizarHeaderUsuario();
+          navegar(usuarioAtual.tipo === 'agente' ? 'agente' : 'mapa');
+          mostrarToast("Sessão Iniciada", "Bem-vindo(a) à plataforma UrbiSafe, " + usuarioAtual.nome + ".");
+        }
+      );
+    }
+
+    function fazerLogout() {
+      exibirLoading(
+        "Encerrando sessão segura...",
+        "Desconectando canal de notificações em tempo real",
+        600,
+        () => {
+          document.getElementById('app-shell').classList.add('hidden');
+          document.getElementById('auth-screen').classList.remove('hidden');
+        }
+      );
+    }
+
+    function atualizarHeaderUsuario() {
+      document.getElementById('sidebar-nome').innerText = usuarioAtual.nome;
+      document.getElementById('sidebar-cargo').innerText = usuarioAtual.cargo;
+      document.getElementById('avatar-usuario').innerText = usuarioAtual.iniciais;
+      document.getElementById('avatar-usuario').className = usuarioAtual.tipo === 'agente'
+        ? "w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-xs shrink-0"
+        : "w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0";
+    }
+
+    // Cálculo de Score de Risco
+    function calcularScore(ev) {
+      return Number((ev.severidade * ev.impacto * (ev.nc / 100)).toFixed(1));
+    }
+
+    function estiloRisco(sc, estado) {
+      if (estado === "Em Validação") {
+        return { label: "Em Validação", badge: "bg-blue-600 text-white", border: "border-blue-500", icon: "fa-hourglass-half" };
+      }
+      if (estado === "Em Monitoramento") {
+        return { label: "Em Monitoramento", badge: "bg-amber-600 text-white", border: "border-amber-500", icon: "fa-eye" };
+      }
+      if (sc >= 16) return { label: "Crítico", badge: "bg-rose-600 text-white", border: "border-rose-500", icon: "fa-triangle-exclamation" };
+      if (sc >= 10) return { label: "Alto", badge: "bg-orange-500 text-white", border: "border-orange-500", icon: "fa-circle-exclamation" };
+      if (sc >= 5)  return { label: "Moderado", badge: "bg-amber-400 text-slate-950", border: "border-amber-400", icon: "fa-circle-info" };
+      return { label: "Baixo", badge: "bg-sky-500 text-white", border: "border-sky-400", icon: "fa-check" };
+    }
+
+    // Navegação entre as Visões da Aplicação
+    function navegar(destino) {
+      // Impede morador de entrar na visão de agente via URL/código
+      if (destino === 'agente' && usuarioAtual.tipo === 'morador') {
+        mostrarToast("Acesso Restrito", "O Centro Operacional é exclusivo para agentes da Defesa Civil[cite: 4].");
+        return;
+      }
+
+      document.querySelectorAll('.app-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('view-' + destino).classList.remove('hidden');
+
+      document.querySelectorAll('.menu-item').forEach(btn => {
+        btn.classList.remove('bg-blue-600', 'text-white');
+        btn.classList.add('text-slate-300');
+      });
+      const menuAtivo = document.getElementById('nav-' + destino);
+      if (menuAtivo) {
+        menuAtivo.classList.add('bg-blue-600', 'text-white');
+        menuAtivo.classList.remove('text-slate-300');
+      }
+
+      const titulos = {
+        mapa: ["Mapa de Monitoramento Urbano", "Visualização geolocalizada de ocorrências e sensores em tempo real"],
+        alertas: ["Alertas Priorizados por Score de Risco", "Fila dinâmica ordenada por gravidade, impacto populacional e confiança"],
+        detalhe: ["Detalhes da Ocorrência e Orientações", "Acompanhamento de evolução, área afetada e confirmação comunitária"],
+        confianca: ["Auditoria de Origem e Nível de Confiança", "Composição transparente dos pesos das fontes de dados"],
+        reportar: ["Registrar Ocorrência Comunitária", "Colaboração cidadã rápida em 3 etapas com proteção de identidade"],
+        notificacoes: ["Central de Notificações Push", "Histórico de avisos em tempo real (< 5s) e configuração de preferências"],
+        agente: ["Centro Operacional da Defesa Civil", "Gerenciamento de status de ocorrências e despacho de equipes"],
+        privacidade: ["Privacidade e Proteção de Dados (LGPD)", "Controle de consentimento, anonimização e direitos do titular"]
+      };
+
+      if (titulos[destino]) {
+        document.getElementById('topbar-titulo').innerText = titulos[destino][0];
+        document.getElementById('topbar-subtitulo').innerText = titulos[destino][1];
+      }
+
+      renderizarInterface();
+    }
+
+    function aplicarFiltro(cat) {
+      filtroCategoria = cat;
+      document.querySelectorAll('.filtro-btn').forEach(b => {
+        b.className = "filtro-btn bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-3 py-1.5 rounded-lg font-medium";
+      });
+      const ativo = document.getElementById('filtro-' + cat);
+      if (ativo) ativo.className = "filtro-btn bg-blue-600 text-white text-xs px-3 py-1.5 rounded-lg font-medium";
+      renderizarInterface();
+    }
+
+    function verOcorrencia(id) {
+      idSelecionado = id;
+      navegar('detalhe');
+    }
+
+    function verConfianca(id) {
+      idSelecionado = id;
+      navegar('confianca');
+    }
+
+    function confirmarRelato(id) {
+      const ev = eventos.find(e => e.id === id);
+      if (!ev) return;
+      ev.confirmacoesComunidade += 1;
+      ev.nc = Math.min(100, ev.nc + 10);
+      if (ev.nc >= 50 && ev.estado === "Em Validação") {
+        ev.estado = "Confirmado";
+      }
+      ev.tempo = "agora mesmo (< 1s)";
+      renderizarInterface();
+      mostrarToast("Confirmação Registrada (+10%)", "O índice de confiança subiu para " + ev.nc + "% (" + ev.estado + ").");
+    }
+
+    function submeterRelato(e) {
+      e.preventDefault();
+      const cat = document.getElementById('rep-categoria').value;
+      const local = document.getElementById('rep-local').value;
+      const sev = parseInt(document.getElementById('rep-severidade').value, 10);
+      const foto = document.getElementById('rep-foto').value;
+      const desc = document.getElementById('rep-desc').value;
+
+      exibirLoading(
+        "Processando relato e removendo metadados pessoais...",
+        "Calculando índice de confiança inicial e verificando sensores num raio de 500m",
+        850,
+        () => {
+          const ncBase = foto === "COM_FOTO" ? 45 : 30;
+          const novoId = eventos.length + 1;
+          eventos.push({
+            id: novoId,
+            titulo: cat + " — " + local,
+            categoria: cat,
+            bairro: local,
+            severidade: sev,
+            impacto: 4,
+            nc: ncBase,
+            origemPrimaria: foto === "COM_FOTO"
+              ? "Relato Comunitário com Foto e GPS (Hash #USR-9942A)"
+              : "Relato Comunitário em Texto (Hash #USR-9942A)",
+            pesoBase: ncBase,
+            confirmacoesComunidade: 0,
+            convergenciaOficial: false,
+            estado: "Em Validação",
+            tempo: "agora mesmo (< 1s)",
+            recomendacao: desc,
+            x: "46%", y: "44%"
+          });
+
+          notificacoes.unshift({
+            tempo: "Agora (< 1s)",
+            titulo: "Novo Relato em Validação: " + cat,
+            desc: local + " • Confiança inicial de " + ncBase + "% registrada de forma anônima.",
+            tipo: "Em Análise"
+          });
+
+          idSelecionado = novoId;
+          navegar('detalhe');
+          mostrarToast("Relato Publicado com Sucesso", "Sua ocorrência foi registrada anonimamente e está em validação.");
+        }
+      );
+    }
+
+    function alterarStatusOperacional(id, novoEstado) {
+      const ev = eventos.find(e => e.id === id);
+      if (!ev) return;
+      ev.estado = novoEstado;
+      if (novoEstado === "Confirmado" && ev.nc < 50) ev.nc = 80;
+      ev.tempo = "atualizado pela Defesa Civil (< 1s)";
+      renderizarInterface();
+      mostrarToast("Status Atualizado", "Ocorrência #" + id + " alterada para: " + novoEstado);
+    }
+
+    function revogarContaLGPD() {
+      exibirLoading(
+        "Revogando consentimento e expurgando dados cadastrais...",
+        "Removendo registros do Cofre Isolado conforme art. 18 da LGPD",
+        950,
+        () => {
+          document.getElementById('app-shell').classList.add('hidden');
+          document.getElementById('auth-screen').classList.remove('hidden');
+          mostrarToast("Conta Excluída (LGPD)", "Seus dados pessoais foram removidos com sucesso.");
+        }
+      );
+    }
+
+    function renderizarInterface() {
+      const filtrados = eventos
+        .filter(e => filtroCategoria === "TODOS" || e.categoria === filtroCategoria)
+        .sort((a, b) => calcularScore(b) - calcularScore(a));
+
+      // Atualiza contadores e KPIs
+      document.getElementById('badge-count-alertas').innerText = eventos.length;
+      document.getElementById('badge-count-notif').innerText = notificacoes.length;
+      document.getElementById('kpi-ativos').innerText = filtrados.length;
+      document.getElementById('kpi-criticos').innerText = filtrados.filter(e => calcularScore(e) >= 16).length;
+      const media = filtrados.length ? Math.round(filtrados.reduce((s, e) => s + e.nc, 0) / filtrados.length) : 0;
+      document.getElementById('kpi-confianca').innerText = media + "%";
+
+      // 1. Marcadores no Mapa
+      document.getElementById('mapa-marcadores').innerHTML = filtrados.map(ev => {
+        const sc = calcularScore(ev);
+        const est = estiloRisco(sc, ev.estado);
+        return `
+          <button onclick="verOcorrencia(${ev.id})" style="left:${ev.x}; top:${ev.y};" class="pin-pulse absolute -translate-x-1/2 -translate-y-1/2 ${est.badge} px-3 py-1.5 rounded-full shadow-xl border-2 border-white flex items-center gap-1.5 text-xs font-bold hover:scale-110 transition">
+            <i class="fa-solid ${est.icon}"></i>
+            <span>${ev.categoria} • ${ev.nc}%</span>
+          </button>
+        `;
+      }).join('');
+
+      // 2. Feed Lateral do Mapa
+      document.getElementById('mapa-feed-lateral').innerHTML = filtrados.slice(0, 3).map(ev => {
+        const sc = calcularScore(ev);
+        const est = estiloRisco(sc, ev.estado);
+        return `
+          <div onclick="verOcorrencia(${ev.id})" class="cursor-pointer bg-slate-950 border border-slate-800 hover:border-slate-600 p-3.5 rounded-xl transition">
+            <div class="flex items-center justify-between text-[11px] mb-1">
+              <span class="${est.badge} px-2 py-0.5 rounded font-bold">${est.label} • Score ${sc}</span>
+              <span class="text-amber-400 font-semibold">${ev.nc}% conf.</span>
+            </div>
+            <p class="text-xs font-bold text-white line-clamp-1">${ev.titulo}</p>
+            <p class="text-[11px] text-slate-400 mt-1 truncate">${ev.origemPrimaria}</p>
+          </div>
+        `;
+      }).join('');
+
+      // 3. Lista Completa de Alertas
+      document.getElementById('container-lista-alertas').innerHTML = filtrados.map(ev => {
+        const sc = calcularScore(ev);
+        const est = estiloRisco(sc, ev.estado);
+        return `
+          <div class="bg-slate-900 border-l-4 ${est.border} border border-slate-800 p-5 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-slate-700 transition">
+            <div class="space-y-1.5 flex-1">
+              <div class="flex flex-wrap items-center gap-2 text-xs">
+                <span class="${est.badge} px-2.5 py-0.5 rounded-full font-bold"><i class="fa-solid ${est.icon} mr-1"></i> ${est.label} (Score ${sc})</span>
+                <span class="bg-slate-800 text-slate-200 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap">${ev.estado}</span>
+                <span class="text-slate-400"><i class="fa-regular fa-clock mr-1"></i> ${ev.tempo}</span>
+              </div>
+              <h4 class="text-base font-bold text-white">${ev.titulo}</h4>
+              <p class="text-xs text-slate-400"><i class="fa-solid fa-database text-amber-400 mr-1"></i> Fonte: ${ev.origemPrimaria}</p>
+            </div>
+
+            <div class="w-full md:w-64 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Nível de Confiança:</span>
+                <span class="font-bold text-amber-400">${ev.nc}%</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-amber-400 h-full" style="width:${ev.nc}%"></div>
+              </div>
+              <div class="flex gap-2 pt-1">
+                <button onclick="verOcorrencia(${ev.id})" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs py-2 rounded-xl font-medium">Detalhes</button>
+                <button onclick="verConfianca(${ev.id})" class="bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 text-xs px-3 py-2 rounded-xl font-medium">Auditar Fonte</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 4. Detalhes da Ocorrência Selecionada
+      const evAtual = eventos.find(e => e.id === idSelecionado) || eventos[0];
+      const scAtual = calcularScore(evAtual);
+      const estAtual = estiloRisco(scAtual, evAtual.estado);
+
+      document.getElementById('conteudo-detalhe-ocorrencia').innerHTML = `
+        <div class="space-y-5">
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="${estAtual.badge} px-3 py-1 rounded-full font-bold"><i class="fa-solid ${estAtual.icon} mr-1"></i> Nível ${estAtual.label} • Score ${scAtual}</span>
+            <span class="bg-slate-800 border border-slate-700 px-3 py-1 rounded-full whitespace-nowrap">Status: <strong>${evAtual.estado}</strong></span>
+            <span class="bg-amber-950 border border-amber-700 text-amber-300 px-3 py-1 rounded-full">Confiança do Dado: <strong>${evAtual.nc}%</strong></span>
+          </div>
+
+          <div>
+            <h3 class="text-2xl font-bold text-white">${evAtual.titulo}</h3>
+            <p class="text-xs text-slate-400 mt-1"><i class="fa-solid fa-location-dot text-blue-400 mr-1"></i> ${evAtual.bairro} • Atualizado ${evAtual.tempo}</p>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+            <h4 class="text-xs font-bold uppercase text-blue-400 mb-1">Recomendações à População e Equipes</h4>
+            <p class="text-sm text-slate-200 leading-relaxed">${evAtual.recomendacao}</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">Origem Primária</span>
+              <p class="font-bold text-white mt-1">${evAtual.origemPrimaria}</p>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">Parâmetros de Severidade e Impacto</span>
+              <p class="font-bold text-white mt-1">Severidade ${evAtual.severidade}/5 • Impacto Urbano ${evAtual.impacto}/5</p>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">Validações da Vizinhança</span>
+              <p class="font-bold text-emerald-400 mt-1">${evAtual.confirmacoesComunidade} moradores confirmaram no local</p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 pt-2">
+            <button onclick="confirmarRelato(${evAtual.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-3 rounded-xl shadow transition">
+              <i class="fa-solid fa-thumbs-up mr-1.5"></i> Confirmar que está acontecendo aqui (+10% Confiança)
+            </button>
+            <button onclick="verConfianca(${evAtual.id})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-3 rounded-xl shadow transition">
+              <i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i> Ver Origem e Cálculo de Confiança Detalhado
+            </button>
+          </div>
+        </div>
+      `;
+
+      // 5. Auditoria de Origem e Confiança
+      const bonusCom = Math.min(30, evAtual.confirmacoesComunidade * 10);
+      document.getElementById('conteudo-auditoria-confianca').innerHTML = `
+        <div class="space-y-5">
+          <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="text-xs text-slate-400">Ocorrência Auditada</span>
+              <h3 class="text-lg font-bold text-white mt-0.5">${evAtual.titulo}</h3>
+              <p class="text-xs text-amber-400 mt-1"><i class="fa-solid fa-microchip mr-1"></i> ${evAtual.origemPrimaria}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-slate-400">Nível de Confiança Calculado</span>
+              <p class="text-3xl font-extrabold text-amber-400">${evAtual.nc}%</p>
+              <span class="text-[11px] ${evAtual.nc >= 50 ? 'text-emerald-400' : 'text-amber-300'}">
+                ${evAtual.nc >= 50 ? '✔ Ocorrência Verificada (≥ 50%)' : '⏳ Aguardando Corroboração (< 50%)'}
+              </span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">1. Peso da Fonte Primária</span>
+              <p class="text-2xl font-bold text-blue-400 mt-1">${evAtual.pesoBase}%</p>
+              <p class="text-slate-400 mt-1">Concessionárias/APIs oficiais (90%), Sensores IoT (85%), Relato com Foto (45%) ou Texto (30%).</p>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">2. Corroboração Comunitária</span>
+              <p class="text-2xl font-bold text-emerald-400 mt-1">+${bonusCom}%</p>
+              <p class="text-slate-400 mt-1">${evAtual.confirmacoesComunidade} confirmações presenciais num raio de 500m (+10% por vizinho, teto de +30%).</p>
+            </div>
+            <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+              <span class="text-slate-400">3. Cruzamento de Sensores</span>
+              <p class="text-2xl font-bold text-purple-400 mt-1">${evAtual.convergenciaOficial ? 'Confirmado' : 'Isolado'}</p>
+              <p class="text-slate-400 mt-1">Quando relatos comunitários coincidem com telemetria oficial, a confiança atinge 95%–100%.</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div class="text-slate-300">
+              <i class="fa-solid fa-lock text-emerald-400 mr-1.5"></i> <strong>Auditoria de Privacidade:</strong> Todos os colaboradores comunitários deste evento foram anonimizados na ingestão.
+            </div>
+            <button onclick="confirmarRelato(${evAtual.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-lg">
+              Confirmar Presencialmente (+10%)
+            </button>
+          </div>
+        </div>
+      `;
+
+      // 7. Notificações
+      document.getElementById('container-notificacoes').innerHTML = notificacoes.map(n => `
+        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-start justify-between gap-3">
+          <div>
+            <span class="text-[11px] text-blue-400 font-semibold"><i class="fa-regular fa-bell mr-1"></i> ${n.tempo}</span>
+            <h4 class="text-sm font-bold text-white mt-0.5">${n.titulo}</h4>
+            <p class="text-xs text-slate-400 mt-1">${n.desc}</p>
+          </div>
+          <span class="text-[10px] bg-slate-800 border border-slate-700 text-slate-300 px-2.5 py-1 rounded-full font-semibold shrink-0">${n.tipo}</span>
+        </div>
+      `).join('');
+
+      // 8. Tabela do Centro Operacional da Defesa Civil
+      document.getElementById('tabela-comando-agente').innerHTML = eventos.map(ev => {
+        const sc = calcularScore(ev);
+        return `
+          <tr class="hover:bg-slate-950/60">
+            <td class="py-3.5 px-3 font-semibold text-white">${ev.titulo}</td>
+            <td class="py-3.5 px-3 text-slate-300">${ev.origemPrimaria}</td>
+            <td class="py-3.5 px-3 font-bold text-amber-400">${ev.nc}%</td>
+            <td class="py-3.5 px-3 font-bold">${sc}</td>
+            <td class="py-3.5 px-3"><span class="inline-block bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-blue-300 font-semibold whitespace-nowrap">${ev.estado}</span></td>
+            <td class="py-3.5 px-3 space-x-1 whitespace-nowrap">
+              <button onclick="alterarStatusOperacional(${ev.id}, 'Confirmado')" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg">Validar</button>
+              <button onclick="alterarStatusOperacional(${ev.id}, 'Alerta Emitido')" class="bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1 rounded-lg">Emitir Alerta</button>
+              <button onclick="alterarStatusOperacional(${ev.id}, 'Em Monitoramento')" class="bg-amber-600 hover:bg-amber-500 text-white px-2.5 py-1 rounded-lg">Monitorar</button>
+              <button onclick="alterarStatusOperacional(${ev.id}, 'Encerrado')" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1 rounded-lg">Encerrar</button>
+              <button onclick="alterarStatusOperacional(${ev.id}, 'Descartado')" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1 rounded-lg">Descartar</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+  </script>
+</body>
+</html>
