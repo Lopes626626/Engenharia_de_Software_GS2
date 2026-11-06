@@ -4,7 +4,7 @@
 ---
 
 ## 👥 Integrantes do Grupo
-* **Rafael Lopes Bestilleiro Benedetti** — RM: 5554781 — 3ECR
+* **Rafael Lopes Bestilleiro Benedetti** — RM: 554781 — 3ECR
 * **Breno Ferreira e Silva** — RM: 555503 — 3ECR
 * **Vinicius de Abreu Fernandes** — RM: 558184 — 3ECA 
 
