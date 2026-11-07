@@ -231,7 +231,7 @@
 
           <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Gestão & Privacidade</p>
 
-          <!-- Apenas visível ou liberado para Agentes da Defesa Civil -->
+          <!-- Apenas visível para Agentes da Defesa Civil -->
           <button onclick="navegar('agente')" id="nav-agente" class="menu-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-300 hover:bg-slate-800">
             <i class="fa-solid fa-sliders w-4 text-center text-purple-400"></i>
             <span>Centro Operacional</span>
@@ -670,7 +670,8 @@
         nc: 96,
         origemPrimaria: "Sensor Pluviométrico #PLUV-402 + API CGE Defesa Civil",
         pesoBase: 85,
-        confirmacoesComunidade: 6,
+        confirmacoesComunidade: 3,
+        usuariosConfirmados: [],
         convergenciaOficial: true,
         estado: "Alerta Emitido",
         tempo: "há 2 segundos",
@@ -687,7 +688,8 @@
         nc: 90,
         origemPrimaria: "API Concessionária Enel + Telemetria CET",
         pesoBase: 90,
-        confirmacoesComunidade: 3,
+        confirmacoesComunidade: 2,
+        usuariosConfirmados: [],
         convergenciaOficial: true,
         estado: "Em Monitoramento",
         tempo: "há 3 segundos",
@@ -704,7 +706,8 @@
         nc: 85,
         origemPrimaria: "Estação Meteorológica IoT #TH-119",
         pesoBase: 85,
-        confirmacoesComunidade: 2,
+        confirmacoesComunidade: 0,
+        usuariosConfirmados: [],
         convergenciaOficial: false,
         estado: "Confirmado",
         tempo: "há 4 segundos",
@@ -722,6 +725,7 @@
         origemPrimaria: "Relato Comunitário com Foto e GPS (Hash #USR-8821)",
         pesoBase: 45,
         confirmacoesComunidade: 0,
+        usuariosConfirmados: [],
         convergenciaOficial: false,
         estado: "Em Validação",
         tempo: "há 1 segundo",
@@ -760,29 +764,36 @@
       setTimeout(() => toast.classList.add('hidden'), 3800);
     }
 
-    // Preenchimento rápido na tela de Login
+    // Preenchimento rápido na tela de Login (Isolado)
     function preencherLogin(perfil) {
       const btnM = document.getElementById('btn-demo-morador');
       const btnA = document.getElementById('btn-demo-agente');
+      const inputEmail = document.getElementById('login-email');
+
       if (perfil === 'agente') {
-        document.getElementById('login-email').value = "juliana.costa@defesacivil.sp.gov.br";
+        inputEmail.value = "juliana.costa@defesacivil.sp.gov.br";
         btnA.className = "border-2 border-amber-500 bg-amber-950/30 p-3 rounded-xl text-left transition";
         btnM.className = "border border-slate-800 bg-slate-950/60 p-3 rounded-xl text-left transition";
-        usuarioAtual = { nome: "Juliana Costa", cargo: "Coordenadora Defesa Civil", iniciais: "JC", tipo: "agente" };
       } else {
-        document.getElementById('login-email').value = "carlos.mendes@cidadao.sp.gov.br";
+        inputEmail.value = "carlos.mendes@cidadao.sp.gov.br";
         btnM.className = "border-2 border-blue-500 bg-blue-950/30 p-3 rounded-xl text-left transition";
         btnA.className = "border border-slate-800 bg-slate-950/60 p-3 rounded-xl text-left transition";
-        usuarioAtual = { nome: "Carlos Mendes", cargo: "Morador • Hash #9942A", iniciais: "CM", tipo: "morador" };
       }
     }
 
-    // Execução do Login com Tela de Carregamento
+    // Execução do Login com Identificação Estrita pelo E-mail
     function executarLogin(e) {
       e.preventDefault();
       if (!document.getElementById('login-lgpd').checked) {
         mostrarToast("Consentimento Necessário", "Aceite o termo de privacidade LGPD para prosseguir.");
         return;
+      }
+
+      const emailDigitado = document.getElementById('login-email').value.trim().toLowerCase();
+      if (emailDigitado.includes('defesacivil') || emailDigitado.includes('juliana')) {
+        usuarioAtual = { nome: "Juliana Costa", cargo: "Coordenadora Defesa Civil", iniciais: "JC", tipo: "agente" };
+      } else {
+        usuarioAtual = { nome: "Carlos Mendes", cargo: "Morador • Hash #9942A", iniciais: "CM", tipo: "morador" };
       }
 
       exibirLoading(
@@ -793,7 +804,6 @@
           document.getElementById('auth-screen').classList.add('hidden');
           document.getElementById('app-shell').classList.remove('hidden');
           
-          // Se for morador, oculta o Centro Operacional no menu para respeitar a regra de permissão
           const navAgente = document.getElementById('nav-agente');
           if (usuarioAtual.tipo === 'morador') {
             navAgente.classList.add('hidden');
@@ -802,6 +812,7 @@
           }
 
           atualizarHeaderUsuario();
+          renderizarInterface();
           navegar(usuarioAtual.tipo === 'agente' ? 'agente' : 'mapa');
           mostrarToast("Sessão Iniciada", "Bem-vindo(a) à plataforma UrbiSafe, " + usuarioAtual.nome + ".");
         }
@@ -811,11 +822,12 @@
     function fazerLogout() {
       exibirLoading(
         "Encerrando sessão segura...",
-        "Desconectando canal de notificações em tempo real",
+        "Limpando cache de sessão e desconectando WebSockets",
         600,
         () => {
           document.getElementById('app-shell').classList.add('hidden');
           document.getElementById('auth-screen').classList.remove('hidden');
+          preencherLogin('morador');
         }
       );
     }
@@ -849,7 +861,6 @@
 
     // Navegação entre as Visões da Aplicação
     function navegar(destino) {
-      // Impede morador de entrar na visão de agente via URL/código
       if (destino === 'agente' && usuarioAtual.tipo === 'morador') {
         mostrarToast("Acesso Restrito", "O Centro Operacional é exclusivo para agentes da Defesa Civil[cite: 4].");
         return;
@@ -907,17 +918,35 @@
       navegar('confianca');
     }
 
+    // Confirmação atrelada especificamente ao nome do usuário logado (Isolamento por ID/Nome)
     function confirmarRelato(id) {
       const ev = eventos.find(e => e.id === id);
       if (!ev) return;
+
+      if (!ev.usuariosConfirmados) ev.usuariosConfirmados = [];
+
+      if (ev.usuariosConfirmados.includes(usuarioAtual.nome)) {
+        mostrarToast("Validação Já Computada", usuarioAtual.nome + ", você já confirmou esta ocorrência anteriormente.");
+        return;
+      }
+
+      if (ev.confirmacoesComunidade >= 3) {
+        mostrarToast("Limite Comunitário Atingido", "Este evento já atingiu o teto máximo de +30% por confirmações comunitárias (RN01).");
+        return;
+      }
+
+      ev.usuariosConfirmados.push(usuarioAtual.nome);
       ev.confirmacoesComunidade += 1;
-      ev.nc = Math.min(100, ev.nc + 10);
+
+      const tetoEvento = ev.convergenciaOficial ? 100 : Math.min(100, ev.pesoBase + 30);
+      ev.nc = Math.min(tetoEvento, ev.nc + 10);
+
       if (ev.nc >= 50 && ev.estado === "Em Validação") {
         ev.estado = "Confirmado";
       }
       ev.tempo = "agora mesmo (< 1s)";
       renderizarInterface();
-      mostrarToast("Confirmação Registrada (+10%)", "O índice de confiança subiu para " + ev.nc + "% (" + ev.estado + ").");
+      mostrarToast("Confirmação Registrada (+10%)", "Voto de " + usuarioAtual.nome + " validado! Confiança: " + ev.nc + "% (" + ev.estado + ").");
     }
 
     function submeterRelato(e) {
@@ -930,11 +959,16 @@
 
       exibirLoading(
         "Processando relato e removendo metadados pessoais...",
-        "Calculando índice de confiança inicial e verificando sensores num raio de 500m",
-        850,
+        "Calculando índice de confiança inicial e injetando marcador no mapa geoespacial",
+        900,
         () => {
           const ncBase = foto === "COM_FOTO" ? 45 : 30;
           const novoId = eventos.length + 1;
+          
+          const posicoesX = ["30%", "65%", "42%", "78%", "25%"];
+          const posicoesY = ["60%", "32%", "75%", "68%", "45%"];
+          const idxPos = novoId % posicoesX.length;
+
           eventos.push({
             id: novoId,
             titulo: cat + " — " + local,
@@ -948,11 +982,13 @@
               : "Relato Comunitário em Texto (Hash #USR-9942A)",
             pesoBase: ncBase,
             confirmacoesComunidade: 0,
+            usuariosConfirmados: [],
             convergenciaOficial: false,
             estado: "Em Validação",
             tempo: "agora mesmo (< 1s)",
             recomendacao: desc,
-            x: "46%", y: "44%"
+            x: posicoesX[idxPos],
+            y: posicoesY[idxPos]
           });
 
           notificacoes.unshift({
@@ -963,8 +999,8 @@
           });
 
           idSelecionado = novoId;
-          navegar('detalhe');
-          mostrarToast("Relato Publicado com Sucesso", "Sua ocorrência foi registrada anonimamente e está em validação.");
+          navegar('mapa');
+          mostrarToast("Relato Publicado com Sucesso", "Ocorrência inserida no mapa de monitoramento com sucesso!");
         }
       );
     }
@@ -997,7 +1033,6 @@
         .filter(e => filtroCategoria === "TODOS" || e.categoria === filtroCategoria)
         .sort((a, b) => calcularScore(b) - calcularScore(a));
 
-      // Atualiza contadores e KPIs
       document.getElementById('badge-count-alertas').innerText = eventos.length;
       document.getElementById('badge-count-notif').innerText = notificacoes.length;
       document.getElementById('kpi-ativos').innerText = filtrados.length;
@@ -1005,7 +1040,6 @@
       const media = filtrados.length ? Math.round(filtrados.reduce((s, e) => s + e.nc, 0) / filtrados.length) : 0;
       document.getElementById('kpi-confianca').innerText = media + "%";
 
-      // 1. Marcadores no Mapa
       document.getElementById('mapa-marcadores').innerHTML = filtrados.map(ev => {
         const sc = calcularScore(ev);
         const est = estiloRisco(sc, ev.estado);
@@ -1017,7 +1051,6 @@
         `;
       }).join('');
 
-      // 2. Feed Lateral do Mapa
       document.getElementById('mapa-feed-lateral').innerHTML = filtrados.slice(0, 3).map(ev => {
         const sc = calcularScore(ev);
         const est = estiloRisco(sc, ev.estado);
@@ -1033,7 +1066,6 @@
         `;
       }).join('');
 
-      // 3. Lista Completa de Alertas
       document.getElementById('container-lista-alertas').innerHTML = filtrados.map(ev => {
         const sc = calcularScore(ev);
         const est = estiloRisco(sc, ev.estado);
@@ -1066,10 +1098,16 @@
         `;
       }).join('');
 
-      // 4. Detalhes da Ocorrência Selecionada
       const evAtual = eventos.find(e => e.id === idSelecionado) || eventos[0];
+      if (!evAtual.usuariosConfirmados) evAtual.usuariosConfirmados = [];
+      const jaConfirmouEsteUsuario = evAtual.usuariosConfirmados.includes(usuarioAtual.nome);
+      const bloqueadoComunidade = jaConfirmouEsteUsuario || evAtual.confirmacoesComunidade >= 3;
+      
       const scAtual = calcularScore(evAtual);
       const estAtual = estiloRisco(scAtual, evAtual.estado);
+      const textoBotaoDetalhe = jaConfirmouEsteUsuario
+        ? "Ocorrência já confirmada por você"
+        : (evAtual.confirmacoesComunidade >= 3 ? "Teto comunitário atingido (+30%)" : "Confirmar que está acontecendo aqui (+10% Confiança)");
 
       document.getElementById('conteudo-detalhe-ocorrencia').innerHTML = `
         <div class="space-y-5">
@@ -1099,14 +1137,14 @@
               <p class="font-bold text-white mt-1">Severidade ${evAtual.severidade}/5 • Impacto Urbano ${evAtual.impacto}/5</p>
             </div>
             <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
-              <span class="text-slate-400">Validações da Vizinhança</span>
-              <p class="font-bold text-emerald-400 mt-1">${evAtual.confirmacoesComunidade} moradores confirmaram no local</p>
+              <span class="text-slate-400">Validações da Vizinhança (Máx. 3)</span>
+              <p class="font-bold text-emerald-400 mt-1">${evAtual.confirmacoesComunidade} de 3 confirmações (+${Math.min(30, evAtual.confirmacoesComunidade * 10)}%)</p>
             </div>
           </div>
 
           <div class="flex flex-wrap gap-3 pt-2">
-            <button onclick="confirmarRelato(${evAtual.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-3 rounded-xl shadow transition">
-              <i class="fa-solid fa-thumbs-up mr-1.5"></i> Confirmar que está acontecendo aqui (+10% Confiança)
+            <button onclick="confirmarRelato(${evAtual.id})" class="${bloqueadoComunidade ? 'bg-slate-800 text-emerald-400 border border-emerald-700/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white'} text-xs font-bold px-4 py-3 rounded-xl shadow transition">
+              <i class="fa-solid ${bloqueadoComunidade ? 'fa-check-double' : 'fa-thumbs-up'} mr-1.5"></i> ${textoBotaoDetalhe}
             </button>
             <button onclick="verConfianca(${evAtual.id})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-3 rounded-xl shadow transition">
               <i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i> Ver Origem e Cálculo de Confiança Detalhado
@@ -1115,8 +1153,11 @@
         </div>
       `;
 
-      // 5. Auditoria de Origem e Confiança
       const bonusCom = Math.min(30, evAtual.confirmacoesComunidade * 10);
+      const textoBotaoAuditoria = jaConfirmouEsteUsuario
+        ? "✔ Já Confirmado por Você"
+        : (evAtual.confirmacoesComunidade >= 3 ? "Limite +30% Atingido" : "Confirmar Presencialmente (+10%)");
+
       document.getElementById('conteudo-auditoria-confianca').innerHTML = `
         <div class="space-y-5">
           <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl flex flex-wrap items-center justify-between gap-4">
@@ -1143,7 +1184,7 @@
             <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
               <span class="text-slate-400">2. Corroboração Comunitária</span>
               <p class="text-2xl font-bold text-emerald-400 mt-1">+${bonusCom}%</p>
-              <p class="text-slate-400 mt-1">${evAtual.confirmacoesComunidade} confirmações presenciais num raio de 500m (+10% por vizinho, teto de +30%).</p>
+              <p class="text-slate-400 mt-1">${evAtual.confirmacoesComunidade} de 3 confirmações presenciais num raio de 500m (+10% por vizinho, teto de +30%).</p>
             </div>
             <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
               <span class="text-slate-400">3. Cruzamento de Sensores</span>
@@ -1156,14 +1197,13 @@
             <div class="text-slate-300">
               <i class="fa-solid fa-lock text-emerald-400 mr-1.5"></i> <strong>Auditoria de Privacidade:</strong> Todos os colaboradores comunitários deste evento foram anonimizados na ingestão.
             </div>
-            <button onclick="confirmarRelato(${evAtual.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3.5 py-2 rounded-lg">
-              Confirmar Presencialmente (+10%)
+            <button onclick="confirmarRelato(${evAtual.id})" class="${bloqueadoComunidade ? 'bg-slate-800 text-emerald-400 border border-emerald-700/50 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white'} font-bold px-3.5 py-2 rounded-lg transition">
+              ${textoBotaoAuditoria}
             </button>
           </div>
         </div>
       `;
 
-      // 7. Notificações
       document.getElementById('container-notificacoes').innerHTML = notificacoes.map(n => `
         <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-start justify-between gap-3">
           <div>
@@ -1175,7 +1215,7 @@
         </div>
       `).join('');
 
-      // 8. Tabela do Centro Operacional da Defesa Civil
+      // Preenchimento completo e corrigido da tabela do Centro Operacional da Defesa Civil
       document.getElementById('tabela-comando-agente').innerHTML = eventos.map(ev => {
         const sc = calcularScore(ev);
         return `
