@@ -1,16 +1,16 @@
 # 🌐 UrbiSafe — Urban Risk Intelligence Platform
-**Global Solution 2 — CitizenTech | Engenharia de Software (FIAP)**
+**Global Solution 2026.2 — CitizenTech | Engenharia de Software (FIAP)**
 
 ---
 
 ## 👥 Integrantes do Grupo
-* **Rafael Lopes Bestilleiro Benedetti** — RM: 554781 — 3ECR
-* **Breno Ferreira e Silva** — RM: 555503 — 3ECR
-* **Vinicius de Abreu Fernandes** — RM: 558184 — 3ECA 
+- **Rafael Lopes Bestilleiro Benedetti** — RM: 554781 — 3ECR
+- **Breno Ferreira e Silva** — RM: 555503 — 3ECR
+- **Vinicius de Abreu Fernandes** — RM: 558184 — 3ECA
 
 ## 🔗 Links e Caminhos
-* 💻 **Protótipo Web (HTML):** [UrbiSafe Web](index.html)
-* 🎥 **Vídeo :**  
+- 💻 **Protótipo Web (HTML):** [UrbiSafe Web](index.html)
+- 🎥 **Vídeo de Demonstração:** [Inserir Link do YouTube]
 
 ---
 
@@ -18,13 +18,13 @@
 
 ## 🎯 1. Problema, Público-Alvo e Personas
 
-* **O Problema:** Dados sobre enchentes, ondas de calor e quedas de serviços essenciais ficam dispersos. Sensores não cobrem todas as vias, bases públicas demoram a atualizar e relatos em redes sociais carecem de verificação de confiança, atrasando a resposta a emergências.
-* **Público-Alvo:** Moradores urbanos, agentes da Defesa Civil e operadores de concessionárias de serviços públicos.
+- **O Problema:** Dados sobre enchentes, ondas de calor e quedas de serviços essenciais ficam dispersos. Sensores não cobrem todas as vias, bases públicas demoram a atualizar e relatos em redes sociais carecem de verificação de confiança, atrasando a resposta a emergências.
+- **Público-Alvo:** Moradores urbanos e agentes operacionais da Defesa Civil e de serviços públicos.
 
 ### Personas
 
 1. **Carlos Mendes (Morador Urbano, 34 anos):** Desloca-se por áreas de risco. Precisa receber alertas rápidos no celular para alterar sua rota e quer relatar problemas na sua rua em poucos cliques, com anonimato garantido.
-2. **Juliana Costa (Agente da Defesa Civil, 41 anos):** Precisa filtrar relatos falsos. Utiliza o painel operacional para auditar a origem do dado e o nível de confiança (%) antes de despachar equipes.
+2. **Juliana Costa (Agente da Defesa Civil, 41 anos):** Precisa filtrar relatos falsos. Utiliza o painel operacional para auditar a origem do dado e o nível de confiança (%) antes de despachar equipes e acionar concessionárias.
 
 ---
 
@@ -37,11 +37,11 @@ O sistema possui 11 Requisitos Funcionais que definem as funcionalidades disponi
 | **RF01** | O sistema deve permitir a seleção de perfil (Morador ou Agente Local), mediante aceite explícito do termo de consentimento e das políticas de privacidade conforme a LGPD. | Alta | Tela Login |
 | **RF02** | O sistema deve disponibilizar um mapa geoespacial com a localização dos eventos de risco ativos, identificados por cores e ícones de acordo com sua gravidade. | Alta | Tela Mapa em Tempo Real |
 | **RF03** | O sistema deve permitir a filtragem dos eventos apresentados no mapa por categoria de risco: alagamentos, ondas de calor e falhas em serviços essenciais. | Média | Tela Mapa em Tempo Real |
-| **RF04** | O sistema deve apresentar uma lista de alertas ordenada automaticamente pelo Score de Risco, exibindo a prioridade e o estado atual de cada evento. | Alta | Tela Alertas Priorizadas |
+| **RF04** | O sistema deve apresentar uma lista de alertas ordenada automaticamente pelo Score de Risco, exibindo a prioridade e o estado atual de cada evento. | Alta | Tela Alertas Priorizados |
 | **RF05** | O sistema deve permitir a visualização detalhada de cada ocorrência, apresentando localização, severidade, impacto populacional, nível de confiança, histórico e orientações de segurança. | Alta | Tela Detalhes da Ocorrência |
 | **RF06** | O sistema deve apresentar a origem de cada informação (Sensor IoT, API Pública ou Registro Comunitário), acompanhada do respectivo nível de confiança (%) e dos critérios de validação. | Alta | Tela Origem e Confiança (%) |
 | **RF07** | O sistema deve permitir que moradores registrem novas ocorrências informando categoria, localização GPS, descrição e fotografia opcional. | Alta | Tela Reportar Ocorrência |
-| **RF08** | O sistema deve permitir que moradores confirmem ocorrências comunitárias próximas, incrementando em 10 pontos percentuais o nível de confiança do evento, respeitando o limite máximo definido pela regra de negócio. | Média | Tela Reportar Ocorrência |
+| **RF08** | O sistema deve permitir que moradores confirmem ocorrências comunitárias próximas, incrementando em 10 pontos percentuais o nível de confiança do evento, respeitando o limite máximo definido pela regra de negócio. | Média | Telas Detalhes da Ocorrência e Origem e Confiança (%) |
 | **RF09** | O sistema deve disponibilizar uma central de notificações com histórico de alertas e configurações de preferências por categoria de risco, permitindo o recebimento de atualizações em tempo real. | Alta | Tela Central de Notificações |
 | **RF10** | O sistema deve disponibilizar um painel operacional para agentes locais, permitindo validar, emitir alertas, monitorar, encerrar ou descartar ocorrências por meio de uma máquina de estados. | Alta | Tela Centro Operacional |
 | **RF11** | O sistema deve anonimizar os dados pessoais dos relatos comunitários por meio de um mecanismo de proteção de informações (PII Filter), além de permitir a consulta e revogação do consentimento do usuário. | Alta | Telas Login e Privacidade & LGPD |
@@ -105,14 +105,13 @@ O sistema deve calcular automaticamente a prioridade de cada ocorrência conside
 
 ---
 
-## 📐 5. Diagramas UML
+## 📐 5. Diagramas UML e Arquitetura
 
 ### 5.1. Diagrama de Sequência
 ![Diagrama de Sequência](Imagens/Diagrama%20de%20Sequência.png)
 
-### 5.2. Diagrama de Estado
-![Diagrama de Estado](Imagens/Diagrama%20de%20Estado.png)
+### 5.2. Diagrama de Estados
+![Diagrama de Estados](Imagens/Diagrama%20de%20Estado.png)
 
-### 5.3 Arquiterura de camadas
-![Arquitetura de Camada](Imagens/Arquitetura%20em%20camadas.png)
-
+### 5.3. Arquitetura em Camadas
+![Arquitetura em Camadas](Imagens/Arquitetura%20em%20camadas.png)
